@@ -21,17 +21,17 @@ class PyObjectId(ObjectId):
 
 
 class Comment(BaseModel):
-    author: EmailStr = Field(...)
+    author: str = Field(...)
     body: str = Field(...)
 
 
 class Blog(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-    author: EmailStr = Field(...)
+    author: str = Field(...)
     title: str = Field(...)
     body: str = Field(...)
     published: bool = Field(...)
-    comments: Optional[List[Comment]]
+    comments: Optional[List[Comment]] = []
 
     class Config:
         allow_population_by_field_name = True
@@ -40,17 +40,17 @@ class Blog(BaseModel):
         orm_mode = True
         schema_extra = {
             "example": {
-                "author": "user@example.com",
+                "author": "Username",
                 "title": "Blog Title",
                 "body": "Content of the blog post",
                 "published": True,
                 "comments": [
                     {
-                        "author": "other.user@example.com",
+                        "author": "other.Username",
                         "body": "This is the comment body."
                     },
                     {
-                        "author": "another.user@example.com",
+                        "author": "another.Username",
                         "body": "This is another comment body."
                     }
                 ]
@@ -59,7 +59,7 @@ class Blog(BaseModel):
 
 
 class UpdateBlog(BaseModel):
-    author: Optional[EmailStr]
+    author: Optional[str]
     title: Optional[str]
     body: Optional[str]
     published: Optional[bool]
@@ -70,17 +70,17 @@ class UpdateBlog(BaseModel):
         json_encoders = {ObjectId: str}
         schema_extra = {
             "example": {
-                "author": "user@example.com",
+                "author": "Username",
                 "title": "Blog Title",
                 "body": "Content of the blog post",
                 "published": True,
                 "comments": [
                     {
-                        "author": "other.user@example.com",
+                        "author": "Other Username",
                         "body": "This is the comment body."
                     },
                     {
-                        "author": "another.user@example.com",
+                        "author": "anothaUser",
                         "body": "This is another comment body."
                     }
                 ]

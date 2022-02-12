@@ -1,1 +1,1 @@
-from .blog import Blog, UpdateBlog
+from .blog import Blog, Comment, UpdateBlog
