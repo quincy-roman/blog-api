@@ -19,8 +19,8 @@ async def insert(collection: str, to_save: Any):
     return await db[collection].find_one({'_id': new_doc.inserted_id})
 
 
-async def update(collection: str, to_update: Any, **kwargs):
-    id, query = kwargs['id'], kwargs['query']
+async def update(collection: str, to_update: Any, **params):
+    id, query = params['id'], params['query']
     id_query = {'_id': id}
 
     if len(to_update) >= 1:
