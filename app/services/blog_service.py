@@ -8,7 +8,7 @@ async def find_all(collection: str, search_query: str, limit: int):
     return await db[collection].find(search_query).to_list(limit)
 
 
-async def find_one(collection: str, search_query):
+async def find_one(collection: str, search_query: dict):
     if(doc := await db[collection].find_one(search_query)) is not None:
         return doc
 

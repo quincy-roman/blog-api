@@ -1,12 +1,14 @@
 from typing import Optional
 
-from fastapi import APIRouter, Body, HTTPException, status
+from dependencies import get_current_active_user
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from models import Blog, Comment, UpdateBlog
 from services import (convert_to_encodable, delete, find_all, find_one, insert,
                       update)
 
-router = APIRouter(prefix='/blogs')
+router = APIRouter(
+    prefix='/blogs', dependencies=[Depends(get_current_active_user)])
 collection = 'blogs'
 
 
