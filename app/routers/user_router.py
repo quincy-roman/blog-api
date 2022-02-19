@@ -1,9 +1,10 @@
 from datetime import timedelta
 
+from dependencies import get_current_active_user
 from fastapi import APIRouter, Body, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
-from models import ACCESS_TOKEN_EXPIRE_MINUTES, User, UserInDB
+from models import ACCESS_TOKEN_EXPIRE_MINUTES, Token, User, UserInDB
 from services import *
 
 router = APIRouter()
@@ -27,15 +28,28 @@ async def create_user(user: UserInDB = Body(...)):
     return JSONResponse(created_user, 201)
 
 
-@router.post('/token')
-async def authenticate_user(form_data: OAuth2PasswordRequestForm = Depends()):
+@router.post('/token', response_model=Token)
+async def login_for_token(form_data: OAuth2PasswordRequestForm = Depends()):
     user: UserInDB = await authenticate_user(collection, form_data.username, form_data.password)
     if not user:
         raise BAD_LOGIN
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={'sub': user.username}, expires_delta=access_token_expires
+        data={'sub': f'username:{user.username}'}, expires_delta=access_token_expires
     )
 
+    # * Note: JWT IDs can collide so prefixing sub with whatever the thing is is helpful.
+    # ! It must be unique across the ENTIRE application, and needs to be a string
+
     return {'access_token': access_token, 'token_type': 'bearer'}
+
+
+@router.get('/users/me', response_model=User)
+async def read_me(current_user: User = Depends(get_current_active_user)):
+    return current_user
+
+
+@router.get("/users/me/items/")
+async def read_own_items(current_user: User = Depends(get_current_active_user)):
+    return [{"item_id": "item", "owner": current_user.username}]

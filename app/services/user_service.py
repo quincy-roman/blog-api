@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Optional
 
-from jose import JWTError, jwt
+from jose import jwt
 from models import ALGORITHM, SECRET_KEY, UserInDB
 from passlib.context import CryptContext
 
@@ -20,6 +20,7 @@ def verify_hash(password: str, hash: str) -> bool:
 
 async def authenticate_user(collection: str, username: str, password: str):
     user: UserInDB = await find_one(collection, {'username': username})
+    user = UserInDB(**user)
     if not user:
         return False
     if not verify_hash(password, user.hashed_pass):
