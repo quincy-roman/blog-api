@@ -19,10 +19,13 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
         token_data = TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    user = await find_one('users', {'username': token_data.username[9:]})
+
+    # Use a User object to avoid storing the password hash unnecessarily.
+    # Taking a slice of token_data.username because of appended "username:"
+    user = User(**await find_one('users', {'username': token_data.username[9:]}))
+
     if user is None:
         raise credentials_exception
-    user = User(**user)
     return user
 
 

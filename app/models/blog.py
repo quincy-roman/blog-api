@@ -13,7 +13,7 @@ class Comment(BaseModel):
 
 class Blog(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-    author: str = Field(...)
+    author: Optional[str]
     title: str = Field(...)
     body: str = Field(...)
     published: bool = Field(...)
@@ -26,7 +26,6 @@ class Blog(BaseModel):
         orm_mode = True
         schema_extra = {
             "example": {
-                "author": "Username",
                 "title": "Blog Title",
                 "body": "Content of the blog post",
                 "published": True,
@@ -56,7 +55,6 @@ class UpdateBlog(BaseModel):
         json_encoders = {ObjectId: str}
         schema_extra = {
             "example": {
-                "author": "Username",
                 "title": "Blog Title",
                 "body": "Content of the blog post",
                 "published": True,

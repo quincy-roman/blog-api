@@ -7,13 +7,14 @@ from fastapi.security import OAuth2PasswordRequestForm
 from models import ACCESS_TOKEN_EXPIRE_MINUTES, Token, User, UserInDB
 from services import *
 
-router = APIRouter()
+router = APIRouter(tags=['users'])
+
 collection = 'users'
 BAD_LOGIN = HTTPException(400, 'Incorrect username or password', {
                           "WWW-Authenticate": "Bearer"})
 
 
-@router.get('/', response_description='Get all users', response_model=User)
+@router.get('/users', response_description='Get all users', response_model=User)
 async def get_all_users(limit: int = 100):
     users = await find_all(collection, None, limit)
 
@@ -48,8 +49,3 @@ async def login_for_token(form_data: OAuth2PasswordRequestForm = Depends()):
 @router.get('/users/me', response_model=User)
 async def read_me(current_user: User = Depends(get_current_active_user)):
     return current_user
-
-
-@router.get("/users/me/items/")
-async def read_own_items(current_user: User = Depends(get_current_active_user)):
-    return [{"item_id": "item", "owner": current_user.username}]

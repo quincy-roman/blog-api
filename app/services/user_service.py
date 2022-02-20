@@ -19,8 +19,7 @@ def verify_hash(password: str, hash: str) -> bool:
 
 
 async def authenticate_user(collection: str, username: str, password: str):
-    user: UserInDB = await find_one(collection, {'username': username})
-    user = UserInDB(**user)
+    user: UserInDB = UserInDB(**await find_one(collection, {'username': username}))
     if not user:
         return False
     if not verify_hash(password, user.hashed_pass):

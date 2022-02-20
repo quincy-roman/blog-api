@@ -3,16 +3,19 @@ from typing import Optional
 from dependencies import get_current_active_user
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
-from models import Blog, Comment, UpdateBlog
+from models import Blog, Comment, UpdateBlog, User
 from services import (convert_to_encodable, delete, find_all, find_one, insert,
                       update)
 
 router = APIRouter(
-    prefix='/blogs', dependencies=[Depends(get_current_active_user)])
+    prefix='/blogs',
+    dependencies=[Depends(get_current_active_user)],
+    tags=['blogs'])
+
 collection = 'blogs'
 
 
-@router.get('/', response_description='List all blogs', response_model=Blog)
+@router.get('', response_description='List all blogs', response_model=Blog)
 async def get_all_blogs(limit: int = 1000, published: bool = True, author: Optional[str] = None):
     search_query = {'published': published}
     if author:
@@ -23,8 +26,9 @@ async def get_all_blogs(limit: int = 1000, published: bool = True, author: Optio
     return JSONResponse(status_code=status.HTTP_200_OK, content=blogs)
 
 
-@router.post('/', response_description='Post a blog', response_model=Blog)
-async def post_blog(blog: Blog = Body(...)):
+@router.post('', response_description='Post a blog', response_model=Blog)
+async def post_blog(blog: Blog = Body(...), current_user: User = Depends(get_current_active_user)):
+    blog.author = current_user.username
     created_blog = await insert(collection, blog)
     return JSONResponse(status_code=status.HTTP_201_CREATED, content=created_blog)
 
