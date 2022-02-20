@@ -4,8 +4,7 @@ from dependencies import get_current_active_user
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from models import Blog, Comment, UpdateBlog, User
-from services import (convert_to_encodable, delete, find_all, find_one, insert,
-                      update)
+from services import convert_to_encodable
 
 router = APIRouter(
     prefix='/blogs',
@@ -21,7 +20,8 @@ async def get_all_blogs(limit: int = 1000, published: bool = True, author: Optio
     if author:
         search_query['author'] = author
 
-    blogs = await find_all(collection, search_query, limit)
+    # blogs = await find_all(collection, search_query, limit)
+    blogs = await Blog.find(search_query, limit=limit).to_list()
 
     return JSONResponse(status_code=status.HTTP_200_OK, content=blogs)
 
@@ -29,7 +29,8 @@ async def get_all_blogs(limit: int = 1000, published: bool = True, author: Optio
 @router.post('', response_description='Post a blog', response_model=Blog)
 async def post_blog(blog: Blog = Body(...), current_user: User = Depends(get_current_active_user)):
     blog.author = current_user.username
-    created_blog = await insert(collection, blog)
+    # created_blog = await insert(collection, blog)
+    created_blog = await blog.insert()
     return JSONResponse(status_code=status.HTTP_201_CREATED, content=created_blog)
 
 
@@ -37,8 +38,11 @@ async def post_blog(blog: Blog = Body(...), current_user: User = Depends(get_cur
 async def add_comment(id: str, comment: Comment = Body(...)):
     comment = convert_to_encodable(comment)
 
-    query_params = {'id': id, 'query': {'$push': {'comments': comment}}}
-    result = await update(collection, comment, **query_params)
+    # query_params = {'id': id, 'query': {'$push': {'comments': comment}}}
+    # result = await update(collection, comment, **query_params)
+    blog = await Blog.find_one(Blog.id == id)
+    blog.comments.append(comment)
+    result = await blog.replace()
 
     if result:
         return result
@@ -48,7 +52,8 @@ async def add_comment(id: str, comment: Comment = Body(...)):
 
 @router.get('/{id}', response_description='Get a single blog', response_model=Blog)
 async def get_blog(id: str):
-    blog = await find_one(collection, {'_id': id})
+    # blog = await find_one(collection, {'_id': id})
+    blog = await Blog.find_one(Blog.id == id)
 
     if blog:
         return blog
@@ -58,10 +63,12 @@ async def get_blog(id: str):
 
 @router.put('/{id}', response_description='Update a blog', response_model=Blog)
 async def update_blog(id: str, blog: UpdateBlog = Body(...)):
-    blog = convert_to_encodable(blog)
+    # blog = convert_to_encodable(blog)
 
-    query_params = {'id': id, 'query': {'$set': blog}}
-    result = await update(collection, blog, **query_params)
+    # query_params = {'id': id, 'query': {'$set': blog}}
+    # result = await update(collection, blog, **query_params)
+    blog.id = id
+    result = await blog.replace()
 
     if result:
         return result
@@ -71,7 +78,8 @@ async def update_blog(id: str, blog: UpdateBlog = Body(...)):
 
 @router.delete('/{id}', response_description='Delete a blog')
 async def delete_blog(id: str):
-    if (await delete(collection, {'_id': id})):
+    # if (await delete(collection, {'_id': id})):
+    if await Blog.find_one(Blog.id == id).delete():
         return JSONResponse(status_code=status.HTTP_204_NO_CONTENT)
 
     raise HTTPException(status_code=404, detail=f'Blog {id} not found')
@@ -80,10 +88,13 @@ async def delete_blog(id: str):
 # Following needs to be a PUT instead of DELETE for MongoDB, need full Comment object
 @router.put('/{id}/comments', response_description="Delete a comment from a blog post", response_model=Blog)
 async def delete_comment(id: str, comment: Comment = Body(...)):
-    comment = convert_to_encodable(comment)
+    # comment = convert_to_encodable(comment)
 
-    query_params = {'id': id, 'query': {'$pull': {'comments': comment}}}
-    result = await update(collection, comment, **query_params)
+    # query_params = {'id': id, 'query': {'$pull': {'comments': comment}}}
+    # result = await update(collection, comment, **query_params)
+    blog = await Blog.find_one(Blog.id == id)
+    blog.comments.remove(comment)
+    result = await blog.replace()
 
     if result:
         return result

@@ -1,9 +1,8 @@
 from typing import List, Optional
 
+from beanie import Document
 from bson import ObjectId
 from pydantic import BaseModel, Field
-
-from .pyObjectId import PyObjectId
 
 
 class Comment(BaseModel):
@@ -11,13 +10,15 @@ class Comment(BaseModel):
     body: str = Field(...)
 
 
-class Blog(BaseModel):
-    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+class Blog(Document):
     author: Optional[str]
     title: str = Field(...)
     body: str = Field(...)
     published: bool = Field(...)
     comments: Optional[List[Comment]] = []
+
+    class Collection:
+        name = 'blogs'
 
     class Config:
         allow_population_by_field_name = True
@@ -43,12 +44,15 @@ class Blog(BaseModel):
         }
 
 
-class UpdateBlog(BaseModel):
+class UpdateBlog(Document):
     author: Optional[str]
     title: Optional[str]
     body: Optional[str]
     published: Optional[bool]
     comments: Optional[List[Comment]]
+
+    class Collection:
+        name = 'blogs'
 
     class Config:
         arbitrary_types_allowed = True

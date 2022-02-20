@@ -1,18 +1,19 @@
 from typing import Optional
 
+from beanie import Document
 from bson import ObjectId
-from pydantic import BaseModel, EmailStr, Field
-
-from .pyObjectId import PyObjectId
+from pydantic import EmailStr, Field
 
 
-class User(BaseModel):
-    id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
-    username: str
+class User(Document):
+    username: str = Field(...)
     first_name: Optional[str]
     last_name: Optional[str]
     email: Optional[EmailStr]
     disabled: Optional[bool]
+
+    class Collection:
+        name = 'users'
 
     class Config:
         allow_population_by_field_name = True
