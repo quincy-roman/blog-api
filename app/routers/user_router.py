@@ -3,9 +3,9 @@ from typing import List
 
 from dependencies import get_current_active_user
 from fastapi import APIRouter, Body, Depends, HTTPException
-from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
-from models import ACCESS_TOKEN_EXPIRE_MINUTES, Token, User, UserInDB
+from models import (ACCESS_TOKEN_EXPIRE_MINUTES, Token, User, UserInDB,
+                    UserUpdate)
 from services import authenticate_user, create_access_token, get_password_hash
 
 router = APIRouter(tags=['users'])
@@ -53,3 +53,13 @@ async def login_for_token(form_data: OAuth2PasswordRequestForm = Depends()):
 @router.get('/users/me', response_model=User)
 async def read_me(current_user: User = Depends(get_current_active_user)):
     return current_user
+
+
+@router.put('/users/me/update', response_model=User)
+async def update_me(update: UserUpdate, current_user: User = Depends(get_current_active_user)):
+    user = await UserInDB.by_username(current_user.username)
+
+    user = user.copy(update=update.dict(exclude_unset=True))
+    await user.save()
+
+    return user

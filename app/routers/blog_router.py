@@ -1,10 +1,9 @@
 from typing import List, Optional
 
 from dependencies import get_current_active_user
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from models import Blog, Comment, UpdateBlog, User
-from services import convert_to_encodable
 
 router = APIRouter(
     prefix='/blogs',
@@ -61,10 +60,11 @@ async def update_blog(id: str, updated_blog: UpdateBlog = Body(...)):
     if not blog:
         raise HTTPException(status_code=404, detail=f'Blog {id} not found')
 
-    updated_blog.id = id
-    await updated_blog.replace()
+# TODO This need to be blog, not updated_blog
+    blog = blog.copy(update=updated_blog.dict(exclude_unset=True))
+    await blog.save()
 
-    return updated_blog
+    return blog
 
 
 @router.delete('/{id}', response_description='Delete a blog')
