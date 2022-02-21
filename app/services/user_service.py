@@ -16,9 +16,8 @@ def verify_hash(password: str, hash: str) -> bool:
     return pwd_context.verify(password, hash)
 
 
-async def authenticate_user(collection: str, username: str, password: str):
-    # user: UserInDB = UserInDB(**await find_one(collection, {'username': username}))
-    user = await UserInDB.find_one(UserInDB.username == username)
+async def authenticate_user(username: str, password: str):
+    user = await UserInDB.by_username(username)
     if not user:
         return False
     if not verify_hash(password, user.hashed_pass):

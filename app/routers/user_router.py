@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import List
 
 from dependencies import get_current_active_user
 from fastapi import APIRouter, Body, Depends, HTTPException
@@ -9,29 +10,32 @@ from services import authenticate_user, create_access_token, get_password_hash
 
 router = APIRouter(tags=['users'])
 
-collection = 'users'
 BAD_LOGIN = HTTPException(400, 'Incorrect username or password', {
                           "WWW-Authenticate": "Bearer"})
 
 
-@router.get('/users', response_description='Get all users', response_model=User)
+@router.get('/users', response_description='Get all users', response_model=List[User])
 async def get_all_users(limit: int = 100):
-    users = await User.find_all(limit=limit).to_list()
+    users = await UserInDB.find_all(limit=limit).to_list()
 
-    return JSONResponse(status_code=200, content=users)
+    return users
 
 
-@router.post('/register', response_description='Register a new user', response_model=User)
+@router.post('/register', response_description='Register a new user', response_model=User, status_code=201)
 async def create_user(user: UserInDB = Body(...)):
+    potential_user = await UserInDB.by_username(user.username)
+    if potential_user is not None:
+        raise HTTPException(409, "User with that username already exists")
+
     user.hashed_pass = get_password_hash(user.hashed_pass)
     created_user = await user.insert()
 
-    return JSONResponse(created_user, 201)
+    return created_user
 
 
 @router.post('/token', response_model=Token)
 async def login_for_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    user: UserInDB = await authenticate_user(collection, form_data.username, form_data.password)
+    user: UserInDB = await authenticate_user(form_data.username, form_data.password)
     if not user:
         raise BAD_LOGIN
 

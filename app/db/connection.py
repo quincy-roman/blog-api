@@ -9,4 +9,4 @@ async def init():
     client = AsyncIOMotorClient(os.environ['MONGO_URL'])
     db = client.blogs
 
-    await init_beanie(database=db, document_models=[Blog, UpdateBlog, User, UserInDB])
+    await init_beanie(database=db, document_models=[Blog, UpdateBlog, UserInDB])
