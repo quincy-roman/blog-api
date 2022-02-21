@@ -5,8 +5,6 @@ from jose import jwt
 from models import ALGORITHM, SECRET_KEY, UserInDB
 from passlib.context import CryptContext
 
-from services import find_one
-
 pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
 
@@ -18,8 +16,8 @@ def verify_hash(password: str, hash: str) -> bool:
     return pwd_context.verify(password, hash)
 
 
-async def authenticate_user(collection: str, username: str, password: str):
-    user: UserInDB = UserInDB(**await find_one(collection, {'username': username}))
+async def authenticate_user(username: str, password: str):
+    user = await UserInDB.by_username(username)
     if not user:
         return False
     if not verify_hash(password, user.hashed_pass):
