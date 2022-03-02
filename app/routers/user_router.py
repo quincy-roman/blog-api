@@ -4,9 +4,10 @@ from typing import List
 from dependencies import get_current_active_user
 from fastapi import APIRouter, Body, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from models import (ACCESS_TOKEN_EXPIRE_MINUTES, Token, User, UserInDB,
-                    UserUpdate)
-from services import authenticate_user, create_access_token, get_password_hash
+from models import (ACCESS_TOKEN_EXPIRE_MINUTES, PasswordReset, Token, User,
+                    UserInDB, UserUpdate)
+from services import (authenticate_user, create_access_token,
+                      get_password_hash, verify_hash)
 
 router = APIRouter(tags=['users'])
 
@@ -63,3 +64,17 @@ async def update_me(update: UserUpdate, current_user: User = Depends(get_current
     await user.save()
 
     return user
+
+
+@router.put('/users/me/resetPassword', response_model=User)
+async def reset_password(reset: PasswordReset, current_user: User = Depends(get_current_active_user)):
+    user = await UserInDB.by_username(current_user.username)
+
+    if verify_hash(reset.old_password, user.hashed_pass):
+        user.hashed_pass = get_password_hash(reset.new_password)
+        await user.save()
+
+        return user
+
+    raise HTTPException(
+        400, "Incorrect password. Please re-authenticate before changing your password.")

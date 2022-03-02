@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from dependencies import get_current_active_user
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, Response
 from fastapi.responses import JSONResponse
 from models import Blog, Comment, UpdateBlog, User
 
@@ -38,6 +38,8 @@ async def add_comment(id: str, comment: Comment = Body(...), current_user: User 
         raise HTTPException(status_code=404, detail=f'Blog {id} not found')
 
     comment.author = current_user.username
+    if blog.comments is None:
+        blog.comments = []
     blog.comments.append(comment)
     await blog.replace()
 
@@ -60,21 +62,19 @@ async def update_blog(id: str, updated_blog: UpdateBlog = Body(...)):
     if not blog:
         raise HTTPException(status_code=404, detail=f'Blog {id} not found')
 
-# TODO This need to be blog, not updated_blog
     blog = blog.copy(update=updated_blog.dict(exclude_unset=True))
     await blog.save()
 
     return blog
 
 
-@router.delete('/{id}', response_description='Delete a blog')
+@router.delete('/{id}', response_description='Delete a blog', status_code=204, response_class=Response)
 async def delete_blog(id: str):
     blog = await Blog.get(id)
     if not blog:
         raise HTTPException(status_code=404, detail=f'Blog {id} not found')
 
     await blog.delete()
-    return JSONResponse(status_code=204)
 
 
 # Following needs to be a PUT instead of DELETE for MongoDB, need full Comment object

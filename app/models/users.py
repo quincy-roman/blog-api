@@ -5,6 +5,11 @@ from bson import ObjectId
 from pydantic import BaseModel, EmailStr, Field
 
 
+class PasswordReset(BaseModel):
+    old_password: str = Field(...)
+    new_password: str = Field(...)
+
+
 class UserUpdate(BaseModel):
     username: str = Field(...)
     first_name: Optional[str]

@@ -9,6 +9,13 @@ class Comment(BaseModel):
     author: Optional[str] = None
     body: str = Field(...)
 
+    class Config:
+        schema_extra = {
+            "example": {
+                "body": "Write your comment!"
+            }
+        }
+
 
 class UpdateBlog(BaseModel):
     author: Optional[str]
